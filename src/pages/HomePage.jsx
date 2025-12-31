@@ -36,7 +36,7 @@ const HomePage = () => {
 							</span>
 						</Link>
 						<a
-							href="https://github.com/langchain-ai"
+							href="https://github.com/Macowen14/youtube_RAG"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="px-8 py-4 bg-white/5 border border-white/10 rounded-xl text-lg font-medium hover:bg-white/10 transition-colors"
