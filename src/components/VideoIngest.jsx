@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { endpoints } from "../api/client";
 import useStore from "../store/useStore";
 import { toast } from "react-hot-toast";
-import { Link2, Loader2, Play } from "lucide-react";
+import { Link2, Loader2, Play, Youtube } from "lucide-react";
 
 const VideoIngest = () => {
 	const { currentVideoUrl, setCurrentVideoId, setCurrentVideoUrl, resetState } =
@@ -11,7 +11,6 @@ const VideoIngest = () => {
 	const [loading, setLoading] = useState(false);
 
 	const extractVideoId = (input) => {
-		// Regex for youtube URL formats including short urls
 		const regExp =
 			/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
 		const match = input.match(regExp);
@@ -30,7 +29,7 @@ const VideoIngest = () => {
 
 		setLoading(true);
 		try {
-			resetState(); // Clear previous chat/notes
+			resetState();
 			setCurrentVideoId(videoId);
 			setCurrentVideoUrl(url);
 
@@ -51,43 +50,44 @@ const VideoIngest = () => {
 	};
 
 	return (
-		<div className="relative group w-full max-w-2xl mx-auto mb-10">
-			<div className="absolute -inset-1 bg-gradient-to-r from-primary via-secondary to-primary rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-			<form
-				onSubmit={handleIngest}
-				className="relative flex items-center gap-2 bg-dark p-2 rounded-xl border border-white/10 shadow-2xl"
-			>
-				<div className="pl-3 text-gray-400">
-					<Link2 size={20} />
+		<div className="rounded-lg border border-line bg-panel p-4 shadow-[0_16px_45px_rgba(24,21,18,0.08)]">
+			<div className="mb-4 flex items-center gap-3">
+				<div className="flex h-10 w-10 items-center justify-center rounded-md bg-tube text-white">
+					<Youtube size={20} />
 				</div>
-				<input
-					type="text"
-					value={url}
-					onChange={(e) => {
-						setUrl(e.target.value);
-					}}
-					placeholder="Paste YouTube Link or Video ID"
-					className="flex-1 bg-transparent border-none text-white placeholder-gray-500 focus:outline-none focus:ring-0 py-3"
-					disabled={loading}
-				/>
+				<div>
+					<p className="text-sm font-black text-ink">Video source</p>
+					<p className="text-xs font-medium text-muted">
+						YouTube URLs and raw video IDs are supported.
+					</p>
+				</div>
+			</div>
+
+			<form onSubmit={handleIngest} className="flex flex-col gap-3 sm:flex-row">
+				<label className="flex min-w-0 flex-1 items-center gap-3 rounded-md border border-line bg-paper-soft px-3 py-3 focus-within:border-circuit">
+					<Link2 size={18} className="shrink-0 text-muted" />
+					<input
+						type="text"
+						value={url}
+						onChange={(e) => {
+							setUrl(e.target.value);
+						}}
+						placeholder="Paste YouTube link or video ID"
+						className="min-w-0 flex-1 bg-transparent text-sm font-medium text-ink placeholder:text-muted/70 focus:outline-none"
+						disabled={loading}
+					/>
+				</label>
 				<button
 					type="submit"
 					disabled={loading || !url}
-					className={`
-            flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-300
-            ${
-							loading || !url
-								? "bg-white/5 text-gray-500 cursor-not-allowed"
-								: "bg-gradient-to-r from-primary to-secondary text-white hover:shadow-[0_0_20px_rgba(99,102,241,0.5)] transform hover:scale-[1.02]"
-						}
-          `}
+					className="inline-flex items-center justify-center gap-2 rounded-md bg-tube px-5 py-3 text-sm font-black text-white transition-colors hover:bg-tube-dark disabled:bg-line disabled:text-muted"
 				>
 					{loading ? (
 						<Loader2 className="animate-spin" size={18} />
 					) : (
 						<Play size={18} fill="currentColor" />
 					)}
-					<span>Process</span>
+					Process
 				</button>
 			</form>
 		</div>

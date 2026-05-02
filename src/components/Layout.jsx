@@ -1,59 +1,93 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Youtube, Home, Layout as LayoutIcon, Settings } from "lucide-react";
-import { Toaster } from "react-hot-toast";
+import { Home, Layout as LayoutIcon, LogOut, UserCircle } from "lucide-react";
+import { Toaster, toast } from "react-hot-toast";
+import { supabase } from "../lib/supabase";
+import useAuthStore from "../store/useAuthStore";
 
 const Layout = ({ children }) => {
 	const location = useLocation();
+	const user = useAuthStore((state) => state.user);
 
 	const isActive = (path) => {
 		return location.pathname === path
-			? "text-secondary font-bold"
-			: "text-gray-400 hover:text-white";
+			? "bg-ink text-paper"
+			: "text-muted hover:bg-panel hover:text-ink";
+	};
+
+	const handleSignOut = async () => {
+		if (!supabase) return;
+		const { error } = await supabase.auth.signOut();
+		if (error) {
+			toast.error(error.message);
+		}
 	};
 
 	return (
-		<div className="h-screen bg-dark text-white font-sans selection:bg-secondary selection:text-white overflow-hidden flex flex-col">
-			{/* Background Gradients (Fixed to Viewport) */}
-			<div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-				<div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-primary/20 rounded-full blur-[120px] animate-pulse"></div>
-				<div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] bg-secondary/20 rounded-full blur-[120px] animate-pulse delay-1000"></div>
-			</div>
-
-			<nav className="flex-none h-16 z-50 backdrop-blur-md bg-dark/70 border-b border-white/10 relative">
-				<div className="container mx-auto px-4 h-full flex items-center justify-between">
+		<div className="h-screen bg-paper text-ink font-sans overflow-hidden flex flex-col">
+			<nav className="flex-none h-16 z-50 bg-paper/95 border-b border-line relative">
+				<div className="h-full max-w-7xl mx-auto px-4 md:px-6 flex items-center justify-between">
 					<Link to="/" className="flex items-center gap-2 group">
-						<div className="w-10 h-10 rounded-lg flex items-center justify-center transform group-hover:scale-105 transition-transform duration-300 overflow-hidden">
+						<div className="w-9 h-9 rounded-md flex items-center justify-center overflow-hidden border border-line bg-panel">
 							<img
 								src="/logo.png"
 								alt="RAG Tube Logo"
 								className="w-full h-full object-cover"
 							/>
 						</div>
-						<span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+						<span className="text-lg font-black tracking-tight text-ink">
 							RAG Tube
 						</span>
 					</Link>
 
-					<div className="flex items-center gap-6">
-						<Link
-							to="/"
-							className={`flex items-center gap-2 transition-colors ${isActive(
-								"/"
-							)}`}
-						>
-							<Home size={20} />
-							<span className="hidden md:block">Home</span>
-						</Link>
-						<Link
-							to="/app"
-							className={`flex items-center gap-2 transition-colors ${isActive(
-								"/app"
-							)}`}
-						>
-							<LayoutIcon size={20} />
-							<span className="hidden md:block">App</span>
-						</Link>
+					<div className="flex items-center gap-2">
+						<div className="flex items-center gap-1 rounded-md border border-line bg-paper-soft p-1">
+							<Link
+								to="/"
+								className={`flex items-center gap-2 rounded px-3 py-2 text-sm font-semibold transition-colors ${isActive(
+									"/"
+								)}`}
+							>
+								<Home size={16} />
+								<span className="hidden md:block">Home</span>
+							</Link>
+							<Link
+								to="/app"
+								className={`flex items-center gap-2 rounded px-3 py-2 text-sm font-semibold transition-colors ${isActive(
+									"/app"
+								)}`}
+							>
+								<LayoutIcon size={16} />
+								<span className="hidden md:block">Workspace</span>
+							</Link>
+						</div>
+
+						{user ? (
+							<div className="hidden items-center gap-2 rounded-md border border-line bg-panel px-2 py-1.5 md:flex">
+								<UserCircle size={17} className="text-circuit" />
+								<span className="max-w-40 truncate text-xs font-bold text-muted">
+									{user.email}
+								</span>
+								<button
+									type="button"
+									onClick={handleSignOut}
+									className="flex h-7 w-7 items-center justify-center rounded text-muted transition-colors hover:bg-paper-soft hover:text-ink"
+									aria-label="Sign out"
+									title="Sign out"
+								>
+									<LogOut size={15} />
+								</button>
+							</div>
+						) : (
+							<Link
+								to="/auth"
+								className={`hidden rounded-md border border-line px-3 py-2 text-sm font-bold transition-colors md:block ${isActive(
+									"/auth"
+								)}`}
+							>
+								Sign in
+							</Link>
+						)}
 					</div>
 				</div>
 			</nav>
@@ -64,9 +98,10 @@ const Layout = ({ children }) => {
 				position="bottom-right"
 				toastOptions={{
 					style: {
-						background: "#1e293b",
-						color: "#fff",
-						border: "1px solid rgba(255,255,255,0.1)",
+						background: "#ffffff",
+						color: "#181512",
+						border: "1px solid #d8e1dc",
+						boxShadow: "0 18px 45px rgba(24, 21, 18, 0.14)",
 					},
 				}}
 			/>

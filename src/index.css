@@ -3,48 +3,75 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-	--color-primary: #3b82f6;
-	--color-secondary: #06b6d4;
-	--color-dark: #0f172a;
-	--color-dark-light: #1e293b;
+	--color-ink: #181512;
+	--color-muted: #64706b;
+	--color-paper: #f4f7f5;
+	--color-paper-soft: #edf3f0;
+	--color-panel: #ffffff;
+	--color-line: #d8e1dc;
+	--color-tube: #e11d2e;
+	--color-tube-dark: #a71422;
+	--color-circuit: #0f9f9a;
+	--color-circuit-dark: #0b6f6c;
+	--color-amber-note: #d99826;
+	--color-graphite: #28231f;
+	--color-coal: #12100e;
 }
 
 @layer base {
-	body {
-		@apply bg-dark text-white font-sans antialiased;
+	html,
+	body,
+	#root {
+		min-height: 100%;
 	}
 
-	/* Custom Scrollbar */
+	body {
+		@apply bg-paper text-ink font-sans antialiased;
+		margin: 0;
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+
+	::selection {
+		@apply bg-tube text-white;
+	}
+
 	::-webkit-scrollbar {
-		width: 6px;
-		height: 6px;
+		width: 8px;
+		height: 8px;
 	}
 
 	::-webkit-scrollbar-track {
-		background: transparent;
+		@apply bg-paper;
 	}
 
 	::-webkit-scrollbar-thumb {
-		@apply bg-white/10 rounded-full;
+		@apply bg-line rounded-full;
 	}
 
 	::-webkit-scrollbar-thumb:hover {
-		@apply bg-white/20;
+		@apply bg-muted/50;
 	}
 }
 
 @utility custom-scrollbar {
 	&::-webkit-scrollbar {
-		width: 4px;
+		width: 6px;
 	}
 	&::-webkit-scrollbar-track {
 		background: transparent;
 	}
 	&::-webkit-scrollbar-thumb {
-		@apply bg-white/10 rounded-full;
+		@apply bg-line rounded-full;
 	}
 }
 
 button {
 	cursor: pointer;
+}
+
+button:disabled {
+	cursor: not-allowed;
 }

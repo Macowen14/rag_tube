@@ -1,45 +1,66 @@
 import React, { useState } from "react";
-import useStore from "../store/useStore";
 import VideoIngest from "../components/VideoIngest";
 import ChatInterface from "../components/ChatInterface";
 import NotesDisplay from "../components/NotesDisplay";
 import ModelSelector from "../components/ModelSelector";
-import { MessageSquare, FileText, Youtube, Menu, Settings } from "lucide-react";
+import {
+	FileText,
+	Menu,
+	MessageSquare,
+	PanelLeftClose,
+	Youtube,
+} from "lucide-react";
 
 const AppPage = () => {
-	const [activeConfig, setActiveConfig] = useState("chat"); // 'ingest' | 'chat' | 'notes'
+	const [activeConfig, setActiveConfig] = useState("chat");
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-	// Helper to render active component
 	const renderContent = () => {
 		switch (activeConfig) {
 			case "ingest":
 				return (
-					<div className="max-w-3xl mx-auto pt-10">
-						<h2 className="text-2xl font-bold mb-6">Ingest New Video</h2>
+					<div className="mx-auto max-w-3xl space-y-6 pt-4 md:pt-8">
+						<div>
+							<p className="mb-2 text-sm font-bold uppercase tracking-[0.12em] text-tube">
+								Add source
+							</p>
+							<h2 className="text-3xl font-black tracking-normal text-ink">
+								Ingest a YouTube video
+							</h2>
+							<p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
+								Paste a public YouTube link or video ID. RAG Tube will fetch the
+								transcript, chunk it, and prepare it for grounded chat and notes.
+							</p>
+						</div>
 						<VideoIngest />
-						<div className="mt-12 p-6 bg-dark-light/50 rounded-xl border border-white/5">
-							<h3 className="text-lg font-semibold mb-2">Instructions</h3>
-							<ul className="list-disc list-inside space-y-2 text-gray-400">
-								<li>Paste a YouTube video URL or ID.</li>
-								<li>Click "Process" to fetch transcripts and embed chunks.</li>
-								<li>Once done, switch to Chat or Notes to interact with it.</li>
-							</ul>
+						<div className="rounded-lg border border-line bg-panel p-5">
+							<h3 className="mb-3 text-sm font-black uppercase tracking-[0.12em] text-muted">
+								Workflow
+							</h3>
+							<div className="grid gap-3 md:grid-cols-3">
+								{[
+									"Paste URL",
+									"Process transcript",
+									"Ask or export",
+								].map((step, index) => (
+									<div
+										key={step}
+										className="rounded-md border border-line bg-paper-soft p-4"
+									>
+										<div className="mb-3 flex h-7 w-7 items-center justify-center rounded bg-ink text-xs font-black text-paper">
+											{index + 1}
+										</div>
+										<p className="text-sm font-bold text-ink">{step}</p>
+									</div>
+								))}
+							</div>
 						</div>
 					</div>
 				);
 			case "chat":
-				return (
-					<div className="h-full">
-						<ChatInterface />
-					</div>
-				);
+				return <ChatInterface />;
 			case "notes":
-				return (
-					<div className="h-full">
-						<NotesDisplay />
-					</div>
-				);
+				return <NotesDisplay />;
 			default:
 				return <ChatInterface />;
 		}
@@ -47,53 +68,67 @@ const AppPage = () => {
 
 	const NavButton = ({ id, label, icon: Icon }) => (
 		<button
+			type="button"
 			onClick={() => {
 				setActiveConfig(id);
 				setMobileMenuOpen(false);
 			}}
-			className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+			className={`w-full flex items-center gap-3 rounded-md px-3 py-3 text-left text-sm font-bold transition-colors ${
 				activeConfig === id
-					? "bg-gradient-to-r from-primary/20 to-secondary/20 text-white border border-white/10 shadow-lg"
-					: "text-gray-400 hover:text-white hover:bg-white/5"
+					? "bg-ink text-paper"
+					: "text-muted hover:bg-panel hover:text-ink"
 			}`}
 		>
-			<Icon size={20} className={activeConfig === id ? "text-secondary" : ""} />
-			<span className="font-medium">{label}</span>
+			<Icon
+				size={18}
+				className={activeConfig === id ? "text-circuit" : "text-muted"}
+			/>
+			<span>{label}</span>
 			{activeConfig === id && (
-				<div className="ml-auto w-1.5 h-1.5 rounded-full bg-secondary shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div>
+				<span className="ml-auto h-2 w-2 rounded-full bg-circuit"></span>
 			)}
 		</button>
 	);
 
 	return (
-		<div className="flex h-full overflow-hidden">
-			{/* Mobile Menu Overlay */}
+		<div className="flex h-full overflow-hidden bg-paper">
 			{mobileMenuOpen && (
-				<div
-					className="fixed inset-0 bg-black/80 z-20 md:hidden backdrop-blur-sm"
+				<button
+					type="button"
+					aria-label="Close menu overlay"
+					className="fixed inset-0 z-20 bg-coal/60 md:hidden"
 					onClick={() => setMobileMenuOpen(false)}
-				></div>
+				/>
 			)}
 
-			{/* Sidebar Navigation */}
 			<aside
 				className={`
-            fixed md:relative top-16 md:top-0 left-0 bottom-0 z-30
-            w-64 bg-dark/95 md:bg-transparent border-r border-white/10 md:border-none
-            transform transition-transform duration-300 ease-in-out
-            ${
-							mobileMenuOpen
-								? "translate-x-0"
-								: "-translate-x-full md:translate-x-0"
-						}
-            p-4 flex flex-col gap-2
-      `}
+					fixed md:relative top-16 md:top-0 left-0 bottom-0 z-30
+					w-72 border-r border-line bg-paper-soft
+					transform transition-transform duration-300 ease-in-out
+					${mobileMenuOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+					flex flex-col p-4
+				`}
 			>
-				<div className="mb-4 md:hidden flex justify-between items-center">
-					<span className="font-bold text-lg">Menu</span>
-					<button onClick={() => setMobileMenuOpen(false)} className="p-2">
-						<Menu />
+				<div className="mb-5 flex items-center justify-between md:hidden">
+					<span className="text-sm font-black uppercase tracking-[0.12em] text-muted">
+						Menu
+					</span>
+					<button
+						type="button"
+						onClick={() => setMobileMenuOpen(false)}
+						className="rounded-md border border-line bg-panel p-2 text-muted"
+						aria-label="Close menu"
+					>
+						<PanelLeftClose size={18} />
 					</button>
+				</div>
+
+				<div className="mb-5 rounded-lg border border-line bg-panel p-4">
+					<p className="text-xs font-black uppercase tracking-[0.12em] text-muted">
+						Workspace
+					</p>
+					<p className="mt-2 text-2xl font-black text-ink">Video lab</p>
 				</div>
 
 				<div className="flex flex-col gap-2">
@@ -102,31 +137,31 @@ const AppPage = () => {
 					<NavButton id="notes" label="Generate Notes" icon={FileText} />
 				</div>
 
-				<div className="mt-auto p-4 bg-dark-light/30 rounded-xl border border-white/5">
-					<div className="text-xs text-gray-500 uppercase font-semibold mb-2">
-						Active Model
+				<div className="mt-auto rounded-lg border border-line bg-panel p-4">
+					<div className="mb-3 text-xs font-black uppercase tracking-[0.12em] text-muted">
+						Active model
 					</div>
 					<ModelSelector />
 				</div>
 			</aside>
 
-			{/* Main Content Area */}
-			<main className="flex-1 relative flex flex-col min-w-0 bg-dark/50">
-				{/* Mobile Header */}
-				<div className="md:hidden flex items-center justify-between p-4 border-b border-white/10">
+			<main className="flex min-w-0 flex-1 flex-col bg-paper">
+				<div className="flex items-center justify-between border-b border-line bg-paper-soft p-3 md:hidden">
 					<button
+						type="button"
 						onClick={() => setMobileMenuOpen(true)}
-						className="p-2 text-gray-400"
+						className="rounded-md border border-line bg-panel p-2 text-muted"
+						aria-label="Open menu"
 					>
-						<Menu />
+						<Menu size={18} />
 					</button>
-					<span className="font-semibold text-white capitalize">
+					<span className="text-sm font-black capitalize text-ink">
 						{activeConfig}
 					</span>
-					<div className="w-8"></div> {/* Spacer */}
+					<div className="w-9" />
 				</div>
 
-				<div className="flex-1 p-4 md:p-8 overflow-hidden">
+				<div className="min-h-0 flex-1 overflow-hidden p-4 md:p-6">
 					{renderContent()}
 				</div>
 			</main>

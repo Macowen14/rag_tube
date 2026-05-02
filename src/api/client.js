@@ -1,11 +1,23 @@
 import axios from "axios";
+import useAuthStore from "../store/useAuthStore";
 
 // Create axios instance
 const api = axios.create({
-	baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000", 
+	baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8060",
 	headers: {
 		"Content-Type": "application/json",
 	},
+});
+
+api.interceptors.request.use((config) => {
+	const token = useAuthStore.getState().accessToken;
+
+	if (token) {
+		config.headers = config.headers || {};
+		config.headers.Authorization = `Bearer ${token}`;
+	}
+
+	return config;
 });
 
 export const endpoints = {

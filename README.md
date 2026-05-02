@@ -1,5 +1,28 @@
 # React + Vite
 
+## Supabase Auth
+
+Create a `.env` file from `.env.example` and set:
+
+```bash
+VITE_API_BASE_URL=http://localhost:8060
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-or-publishable-key
+```
+
+Enable Google, GitHub, and Email auth providers in Supabase. Add your local and
+deployed callback URLs in Supabase Auth settings, for example:
+
+```text
+http://localhost:5173/app
+```
+
+The frontend attaches the current Supabase access token to backend requests as:
+
+```text
+Authorization: Bearer <access_token>
+```
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

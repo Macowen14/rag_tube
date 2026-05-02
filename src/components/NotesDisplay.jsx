@@ -2,164 +2,257 @@ import React, { useState } from "react";
 import useStore from "../store/useStore";
 import { endpoints } from "../api/client";
 import ReactMarkdown from "react-markdown";
-import { FileText, Loader2, Sparkles, Download, Copy } from "lucide-react";
+import { Copy, Download, FileText, Loader2, Sparkles } from "lucide-react";
 import html2pdf from "html2pdf.js";
 import { toast } from "react-hot-toast";
+import useAuthStore from "../store/useAuthStore";
 
 const NotesDisplay = () => {
-  const { currentVideoId, selectedModel, notes, setNotes } = useStore();
-  const [topic, setTopic] = useState("Key Takeaways and Summary");
-  const [loading, setLoading] = useState(false);
-  const contentRef = React.useRef(null);
+	const {
+		currentVideoId,
+		selectedModel,
+		notes,
+		savedNotesByUser,
+		setNotes,
+		saveGeneratedNote,
+	} = useStore();
+	const user = useAuthStore((state) => state.user);
+	const [topic, setTopic] = useState("Key Takeaways and Summary");
+	const [loading, setLoading] = useState(false);
+	const contentRef = React.useRef(null);
+	const savedNotes = savedNotesByUser[user?.id] || [];
 
-  const handleGenerate = async () => {
-    if (!currentVideoId) {
-      toast.error("Please ingest a video first");
-      return;
-    }
+	const handleGenerate = async () => {
+		if (!currentVideoId) {
+			toast.error("Please ingest a video first");
+			return;
+		}
 
-    setLoading(true);
-    try {
-      const response = await endpoints.generateNotes(
-        currentVideoId,
-        topic,
-        selectedModel
-      );
-      setNotes(response.answer);
-      toast.success("Notes generated successfully!");
-    } catch (error) {
-      toast.error(`Failed to generate notes: ${error}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+		setLoading(true);
+		try {
+			const response = await endpoints.generateNotes(
+				currentVideoId,
+				topic,
+				selectedModel
+			);
+			setNotes(response.answer);
+			saveGeneratedNote({
+				userId: user?.id,
+				videoId: currentVideoId,
+				topic,
+				content: response.answer,
+				modelName: selectedModel,
+			});
+			toast.success("Notes generated successfully!");
+		} catch (error) {
+			toast.error(`Failed to generate notes: ${error}`);
+		} finally {
+			setLoading(false);
+		}
+	};
 
-  const handleDownload = () => {
-    if (!notes) return;
-    const blob = new Blob([notes], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `notes-${currentVideoId}.md`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success("Notes downloaded!");
-  };
+	const handleDownload = () => {
+		if (!notes) return;
+		const blob = new Blob([notes], { type: "text/markdown" });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = `notes-${currentVideoId}.md`;
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		URL.revokeObjectURL(url);
+		toast.success("Notes downloaded!");
+	};
 
-  const handleCopy = () => {
-    if (!notes) return;
-    navigator.clipboard.writeText(notes);
-    toast.success("Copied to clipboard!");
-  };
+	const handleCopy = () => {
+		if (!notes) return;
+		navigator.clipboard.writeText(notes);
+		toast.success("Copied to clipboard!");
+	};
 
-  const handleDownloadPDF = () => {
-    if (!contentRef.current) return;
+	const handleDownloadPDF = () => {
+		if (!contentRef.current) return;
 
-    const opt = {
-      margin: [10, 10], // top, left, bottom, right
-      filename: `notes-${currentVideoId}.pdf`,
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: "#0f172a" }, // Dark background
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-    };
+		const opt = {
+			margin: [10, 10],
+			filename: `notes-${currentVideoId}.pdf`,
+			image: { type: "jpeg", quality: 0.98 },
+			html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+			jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+		};
 
-    html2pdf()
-      .set(opt)
-      .from(contentRef.current)
-      .save()
-      .then(() => {
-        toast.success("PDF Downloaded!");
-      })
-      .catch((err) => {
-        console.error(err);
-        toast.error("Failed to generate PDF");
-      });
-  };
+		html2pdf()
+			.set(opt)
+			.from(contentRef.current)
+			.save()
+			.then(() => {
+				toast.success("PDF Downloaded!");
+			})
+			.catch((err) => {
+				console.error(err);
+				toast.error("Failed to generate PDF");
+			});
+	};
 
-  if (!currentVideoId) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-gray-500 p-8 border border-white/5 rounded-2xl bg-dark-light/50 backdrop-blur-sm min-h-[400px]">
-        <FileText size={48} className="mb-4 opacity-50" />
-        <p className="text-lg font-medium">No video selected</p>
-        <p className="text-sm">Ingest a video to generate notes</p>
-      </div>
-    );
-  }
+	if (!currentVideoId) {
+		return (
+			<div className="flex h-full min-h-[400px] flex-col items-center justify-center rounded-lg border border-line bg-panel p-8 text-center">
+				<div className="mb-4 flex h-12 w-12 items-center justify-center rounded-md bg-paper text-amber-note">
+					<FileText size={24} />
+				</div>
+				<p className="text-lg font-black text-ink">No video selected</p>
+				<p className="mt-2 max-w-sm text-sm leading-6 text-muted">
+					Ingest a video first to generate summaries, study notes, and exports.
+				</p>
+			</div>
+		);
+	}
 
-  return (
-    <div className="h-full flex flex-col gap-6">
-      <div className="bg-dark-light/30 backdrop-blur-md border border-white/10 rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-          <Sparkles className="text-secondary" size={20} />
-          Generate AI Notes
-        </h3>
+	return (
+		<div className="flex h-full flex-col gap-4">
+			<div className="grid gap-4 lg:grid-cols-[1fr_20rem]">
+				<div className="rounded-lg border border-line bg-panel p-4">
+					<div className="mb-4 flex items-center gap-3">
+						<div className="flex h-10 w-10 items-center justify-center rounded-md bg-amber-note text-white">
+							<Sparkles size={20} />
+						</div>
+						<div>
+							<h3 className="text-sm font-black text-ink">Generate AI notes</h3>
+							<p className="text-xs font-medium text-muted">
+								Tune the topic before exporting.
+							</p>
+						</div>
+					</div>
 
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            className="flex-1 bg-dark/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-secondary/50"
-            placeholder="Topic (e.g., specific concept)"
-          />
-          <button
-            onClick={handleGenerate}
-            disabled={loading}
-            className="bg-secondary hover:bg-cyan-600 text-white px-6 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
-          >
-            {loading ? (
-              <Loader2 className="animate-spin" size={16} />
-            ) : (
-              <Sparkles size={16} />
-            )}
-            Generate
-          </button>
-        </div>
-      </div>
+					<div className="flex flex-col gap-3 sm:flex-row">
+						<input
+							type="text"
+							value={topic}
+							onChange={(e) => setTopic(e.target.value)}
+							className="min-w-0 flex-1 rounded-md border border-line bg-paper-soft px-3 py-3 text-sm font-medium text-ink placeholder:text-muted/70 focus:border-circuit focus:outline-none"
+							placeholder="Topic, e.g. specific concept"
+						/>
+						<button
+							type="button"
+							onClick={handleGenerate}
+							disabled={loading}
+							className="inline-flex items-center justify-center gap-2 rounded-md bg-amber-note px-5 py-3 text-sm font-black text-white transition-colors hover:bg-[#b97816] disabled:bg-line disabled:text-muted"
+						>
+							{loading ? (
+								<Loader2 className="animate-spin" size={16} />
+							) : (
+								<Sparkles size={16} />
+							)}
+							Generate
+						</button>
+					</div>
+				</div>
 
-      {notes && (
-        <div className="flex-1 bg-dark-light/30 backdrop-blur-md border border-white/10 rounded-2xl p-6 overflow-hidden flex flex-col relative min-h-[500px]">
-          <div className="absolute top-4 right-4 flex gap-2">
-            <button
-              onClick={handleCopy}
-              className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
-              title="Copy to clipboard"
-            >
-              <Copy size={18} />
-            </button>
-            <button
-              onClick={handleDownloadPDF}
-              className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors flex items-center gap-1 group"
-              title="Download PDF"
-            >
-              <FileText size={18} />
-              <span className="text-xs font-semibold hidden group-hover:block transition-all">
-                PDF
-              </span>
-            </button>
-            <button
-              onClick={handleDownload}
-              className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors"
-              title="Download Markdown"
-            >
-              <Download size={18} />
-            </button>
-          </div>
+				<div className="rounded-lg border border-line bg-panel p-4">
+					<div className="mb-3 flex items-center justify-between">
+						<div>
+							<p className="text-sm font-black text-ink">Saved notes</p>
+							<p className="text-xs font-medium text-muted">
+								Scoped to {user?.email || "this account"}
+							</p>
+						</div>
+						<span className="rounded bg-paper-soft px-2 py-1 text-xs font-black text-muted">
+							{savedNotes.length}
+						</span>
+					</div>
 
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar p-4">
-            <div
-              ref={contentRef}
-              className="prose prose-invert max-w-3xl mx-auto prose-headings:text-blue-400 prose-p:text-slate-300 prose-a:text-cyan-400 leading-relaxed p-4 bg-dark"
-            >
-              <ReactMarkdown>{notes}</ReactMarkdown>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+					{savedNotes.length > 0 ? (
+						<div className="custom-scrollbar max-h-36 space-y-2 overflow-y-auto pr-1">
+							{savedNotes.slice(0, 5).map((savedNote) => (
+								<button
+									key={savedNote.id}
+									type="button"
+									onClick={() => setNotes(savedNote.content)}
+									className="w-full rounded-md border border-line bg-paper-soft p-3 text-left transition-colors hover:bg-panel"
+								>
+									<p className="truncate text-xs font-black text-ink">
+										{savedNote.topic}
+									</p>
+									<p className="mt-1 text-xs font-medium text-muted">
+										{savedNote.videoId} -{" "}
+										{new Date(savedNote.createdAt).toLocaleDateString()}
+									</p>
+								</button>
+							))}
+						</div>
+					) : (
+						<p className="rounded-md border border-dashed border-line bg-paper-soft p-3 text-xs font-medium leading-5 text-muted">
+							Generated notes will be saved here for the signed-in user.
+						</p>
+					)}
+				</div>
+			</div>
+
+			{notes ? (
+				<div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-line bg-panel">
+					<div className="flex items-center justify-between border-b border-line bg-paper-soft px-4 py-3">
+						<div>
+							<p className="text-sm font-black text-ink">Notes document</p>
+							<p className="text-xs font-medium text-muted">
+								Export as Markdown or PDF
+							</p>
+						</div>
+						<div className="flex gap-2">
+							<button
+								type="button"
+								onClick={handleCopy}
+								className="flex h-9 w-9 items-center justify-center rounded-md border border-line bg-panel text-muted transition-colors hover:text-ink"
+								title="Copy to clipboard"
+								aria-label="Copy notes"
+							>
+								<Copy size={17} />
+							</button>
+							<button
+								type="button"
+								onClick={handleDownloadPDF}
+								className="flex h-9 w-9 items-center justify-center rounded-md border border-line bg-panel text-muted transition-colors hover:text-ink"
+								title="Download PDF"
+								aria-label="Download PDF"
+							>
+								<FileText size={17} />
+							</button>
+							<button
+								type="button"
+								onClick={handleDownload}
+								className="flex h-9 w-9 items-center justify-center rounded-md border border-line bg-panel text-muted transition-colors hover:text-ink"
+								title="Download Markdown"
+								aria-label="Download Markdown"
+							>
+								<Download size={17} />
+							</button>
+						</div>
+					</div>
+
+					<div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-4">
+						<div
+							ref={contentRef}
+							className="prose prose-sm max-w-3xl rounded-md bg-panel p-5 prose-headings:text-ink prose-p:text-muted prose-a:text-circuit prose-strong:text-ink prose-li:text-muted"
+						>
+							<ReactMarkdown>{notes}</ReactMarkdown>
+						</div>
+					</div>
+				</div>
+			) : (
+				<div className="flex min-h-0 flex-1 items-center justify-center rounded-lg border border-dashed border-line bg-paper-soft p-8 text-center">
+					<div>
+						<div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-md bg-panel text-amber-note">
+							<FileText size={24} />
+						</div>
+						<p className="text-base font-black text-ink">No notes yet</p>
+						<p className="mt-2 max-w-sm text-sm leading-6 text-muted">
+							Generate notes for the current video and they will appear here.
+						</p>
+					</div>
+				</div>
+			)}
+		</div>
+	);
 };
 
 export default NotesDisplay;

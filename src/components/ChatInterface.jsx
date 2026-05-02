@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import useStore from "../store/useStore";
 import { endpoints } from "../api/client";
 import ReactMarkdown from "react-markdown";
-import { Send, User, Bot, Loader2, Info } from "lucide-react";
+import { Bot, Info, Loader2, Send, User } from "lucide-react";
 import toast from "react-hot-toast";
 
 const ChatInterface = () => {
@@ -61,24 +61,46 @@ const ChatInterface = () => {
 
 	if (!currentVideoId) {
 		return (
-			<div className="flex flex-col items-center justify-center h-full text-gray-500 p-8 border border-white/5 rounded-2xl bg-dark-light/50 backdrop-blur-sm">
-				<Info size={48} className="mb-4 opacity-50" />
-				<p className="text-lg font-medium">No video selected</p>
-				<p className="text-sm">Ingest a video to start chatting</p>
+			<div className="flex h-full flex-col items-center justify-center rounded-lg border border-line bg-panel p-8 text-center">
+				<div className="mb-4 flex h-12 w-12 items-center justify-center rounded-md bg-paper text-circuit">
+					<Info size={24} />
+				</div>
+				<p className="text-lg font-black text-ink">No video selected</p>
+				<p className="mt-2 max-w-sm text-sm leading-6 text-muted">
+					Ingest a video first, then this chat will answer using transcript
+					context and citations.
+				</p>
 			</div>
 		);
 	}
 
 	return (
-		<div className="flex flex-col h-full border border-white/10 rounded-2xl bg-dark-light/30 backdrop-blur-md overflow-hidden relative">
-			{/* Ambient glow */}
-			<div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+		<div className="flex h-full flex-col overflow-hidden rounded-lg border border-line bg-panel shadow-[0_16px_45px_rgba(24,21,18,0.08)]">
+			<div className="flex items-center justify-between border-b border-line bg-paper-soft px-4 py-3">
+				<div>
+					<p className="text-sm font-black text-ink">Grounded chat</p>
+					<p className="text-xs font-medium text-muted">
+						Video ID: {currentVideoId}
+					</p>
+				</div>
+				<div className="rounded bg-panel px-2 py-1 text-xs font-bold text-circuit">
+					{chatHistory.length} messages
+				</div>
+			</div>
 
-			<div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6 custom-scrollbar">
+			<div className="custom-scrollbar flex flex-1 flex-col gap-5 overflow-y-auto p-4">
 				{chatHistory.length === 0 && (
-					<div className="flex-1 flex flex-col items-center justify-center text-gray-500 min-h-[200px]">
-						<Bot size={32} className="mb-3 text-secondary opacity-80" />
-						<p className="text-center">Ask me anything about the video!</p>
+					<div className="flex flex-1 flex-col items-center justify-center text-center">
+						<div className="mb-4 flex h-12 w-12 items-center justify-center rounded-md bg-ink text-circuit">
+							<Bot size={24} />
+						</div>
+						<p className="text-base font-black text-ink">
+							Ask a question about the video
+						</p>
+						<p className="mt-2 max-w-md text-sm leading-6 text-muted">
+							Try asking for the main argument, important timestamps, or a
+							comparison between two ideas in the transcript.
+						</p>
 					</div>
 				)}
 
@@ -90,71 +112,77 @@ const ChatInterface = () => {
 						} shrink-0`}
 					>
 						{msg.role === "assistant" && (
-							<div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0 mt-1">
-								<Bot size={16} className="text-secondary" />
+							<div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-paper text-circuit">
+								<Bot size={16} />
 							</div>
 						)}
 
 						<div
-							className={`
-              max-w-[80%] rounded-2xl p-4 text-sm leading-relaxed
-              ${
+							className={`max-w-[82%] rounded-lg p-4 text-sm leading-6 ${
 								msg.role === "user"
-									? "bg-gradient-to-br from-primary to-blue-600 text-white rounded-tr-sm"
-									: "bg-white/5 border border-white/10 text-gray-200 rounded-tl-sm"
-							}
-            `}
+									? "bg-ink text-paper"
+									: "border border-line bg-paper-soft text-ink"
+							}`}
 						>
-							<div className="prose prose-invert prose-sm max-w-none">
+							<div
+								className={`prose prose-sm max-w-none ${
+									msg.role === "user" ? "prose-invert" : ""
+								}`}
+							>
 								<ReactMarkdown>{msg.content}</ReactMarkdown>
 							</div>
 
 							{msg.source && (
-								<div className="mt-2 text-xs opacity-60 flex items-center gap-1 border-t border-white/10 pt-2">
-									<Info size={10} />
+								<div
+									className={`mt-3 flex items-center gap-1 border-t pt-3 text-xs font-semibold ${
+										msg.role === "user"
+											? "border-paper/20 text-paper/70"
+											: "border-line text-muted"
+									}`}
+								>
+									<Info size={12} />
 									<span>Source: {msg.source}</span>
 								</div>
 							)}
 						</div>
 
 						{msg.role === "user" && (
-							<div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
-								<User size={16} className="text-primary" />
+							<div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-tube text-white">
+								<User size={16} />
 							</div>
 						)}
 					</div>
 				))}
+
 				{loading && (
 					<div className="flex gap-3 justify-start">
-						<div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center mt-1">
-							<Bot size={16} className="text-secondary" />
+						<div className="mt-1 flex h-8 w-8 items-center justify-center rounded-md bg-paper text-circuit">
+							<Bot size={16} />
 						</div>
-						<div className="bg-white/5 border border-white/10 text-gray-200 rounded-2xl rounded-tl-sm p-4 flex items-center">
-							<Loader2 className="animate-spin mr-2" size={16} />
-							<span className="text-sm">Thinking...</span>
+						<div className="flex items-center rounded-lg border border-line bg-paper-soft p-4 text-sm font-semibold text-muted">
+							<Loader2 className="mr-2 animate-spin text-circuit" size={16} />
+							Thinking...
 						</div>
 					</div>
 				)}
 				<div ref={messagesEndRef} className="shrink-0" />
 			</div>
 
-			<form
-				onSubmit={handleSend}
-				className="p-4 bg-dark-light/80 border-t border-white/10"
-			>
-				<div className="relative flex items-center">
+			<form onSubmit={handleSend} className="border-t border-line bg-paper-soft p-3">
+				<div className="flex items-center gap-2 rounded-md border border-line bg-panel p-2 focus-within:border-circuit">
 					<input
 						type="text"
 						value={input}
 						onChange={(e) => setInput(e.target.value)}
 						disabled={loading}
 						placeholder="Type your question..."
-						className="w-full bg-dark border border-white/10 rounded-xl px-4 py-3 pr-12 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors"
+						className="min-w-0 flex-1 bg-transparent px-2 py-2 text-sm font-medium text-ink placeholder:text-muted/70 focus:outline-none"
 					/>
 					<button
 						type="submit"
 						disabled={loading || !input.trim()}
-						className="absolute right-2 p-2 bg-primary hover:bg-blue-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+						className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-circuit text-white transition-colors hover:bg-circuit-dark disabled:bg-line disabled:text-muted"
+						aria-label="Send question"
 					>
 						<Send size={16} />
 					</button>
