@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useStore from "../store/useStore";
 import { endpoints } from "../api/client";
 import ReactMarkdown from "react-markdown";
@@ -15,12 +15,45 @@ const NotesDisplay = () => {
 		savedNotesByUser,
 		setNotes,
 		saveGeneratedNote,
+		setSavedNotesForUser,
 	} = useStore();
 	const user = useAuthStore((state) => state.user);
 	const [topic, setTopic] = useState("Key Takeaways and Summary");
 	const [loading, setLoading] = useState(false);
 	const contentRef = React.useRef(null);
 	const savedNotes = savedNotesByUser[user?.id] || [];
+
+	useEffect(() => {
+		if (!user?.id || !currentVideoId) return;
+
+		let cancelled = false;
+
+		endpoints
+			.getNotes(currentVideoId)
+			.then((backendNotes) => {
+				if (cancelled) return;
+
+				setSavedNotesForUser(
+					user.id,
+					backendNotes.map((note) => ({
+						id: note.id,
+						videoId: note.video_id,
+						topic: "Saved note",
+						content: note.content,
+						modelName: null,
+						provider: null,
+						createdAt: note.created_at,
+					}))
+				);
+			})
+			.catch((error) => {
+				console.error("Failed to load saved notes", error);
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [currentVideoId, setSavedNotesForUser, user?.id]);
 
 	const handleGenerate = async () => {
 		if (!currentVideoId) {
@@ -33,16 +66,35 @@ const NotesDisplay = () => {
 			const response = await endpoints.generateNotes(
 				currentVideoId,
 				topic,
-				selectedModel
+				{ modelName: selectedModel }
 			);
 			setNotes(response.answer);
-			saveGeneratedNote({
-				userId: user?.id,
-				videoId: currentVideoId,
-				topic,
-				content: response.answer,
-				modelName: selectedModel,
-			});
+			try {
+				const savedNote = await endpoints.createNote({
+					videoId: currentVideoId,
+					content: response.answer,
+				});
+
+				saveGeneratedNote({
+					userId: user?.id,
+					videoId: savedNote.video_id,
+					topic,
+					content: savedNote.content,
+					modelName: selectedModel,
+					id: savedNote.id,
+					createdAt: savedNote.created_at,
+				});
+			} catch (saveError) {
+				console.error("Failed to save generated note", saveError);
+				saveGeneratedNote({
+					userId: user?.id,
+					videoId: currentVideoId,
+					topic,
+					content: response.answer,
+					modelName: selectedModel,
+				});
+				toast.error("Notes generated, but backend save failed.");
+			}
 			toast.success("Notes generated successfully!");
 		} catch (error) {
 			toast.error(`Failed to generate notes: ${error}`);

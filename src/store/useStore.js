@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+const models = [
+	{ model_name: "gpt-5.4-mini" },
+	{ model_name: "gpt-5-mini" },
+];
+
 const useStore = create(
 	persist(
 		(set) => ({
@@ -8,19 +13,11 @@ const useStore = create(
 			currentVideoId: null,
 			currentVideoUrl: "",
 			activeUserId: null,
-			selectedModel: "mistral-large-3:675b-cloud", // Default model
+			selectedModel: "gpt-5.4-mini",
 			chatHistory: [], // Array of { role: 'user' | 'assistant', content: string, source: string }
 			notes: null, // Markdown string
 			savedNotesByUser: {},
-			models: [
-				{ model_name: "gemma3:27b-cloud" },
-				{ model_name: "mistral-large-3:675b-cloud" },
-				{ model_name: "gemini-3-pro-preview:latest" },
-				{ model_name: "qwen3-coder:480b-cloud" },
-				{ model_name: "ministral-3:3b-cloud" },
-				{ model_name: "gemma3:4b" },
-				{ model_name: "mistral:latest" },
-			],
+			models,
 
 			// Actions
 			setCurrentVideoId: (id) => set({ currentVideoId: id }),
@@ -49,19 +46,40 @@ const useStore = create(
 			clearChatHistory: () => set({ chatHistory: [] }),
 
 			setNotes: (notes) => set({ notes }),
-			saveGeneratedNote: ({ userId, videoId, topic, content, modelName }) =>
+			setSavedNotesForUser: (userId, notes) =>
+				set((state) => {
+					if (!userId) {
+						return {};
+					}
+
+					return {
+						savedNotesByUser: {
+							...state.savedNotesByUser,
+							[userId]: notes,
+						},
+					};
+				}),
+			saveGeneratedNote: ({
+				userId,
+				videoId,
+				topic,
+				content,
+				modelName,
+				id,
+				createdAt,
+			}) =>
 				set((state) => {
 					if (!userId || !content) {
 						return {};
 					}
 
 					const note = {
-						id: `${videoId || "video"}-${Date.now()}`,
+						id: id || `${videoId || "video"}-${Date.now()}`,
 						videoId,
 						topic,
 						content,
 						modelName,
-						createdAt: new Date().toISOString(),
+						createdAt: createdAt || new Date().toISOString(),
 					};
 
 					return {

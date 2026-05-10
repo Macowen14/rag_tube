@@ -37,7 +37,7 @@ const ChatInterface = () => {
 			const response = await endpoints.queryVideo(
 				currentVideoId,
 				userMessage.content,
-				model_name
+				{ modelName: model_name }
 			);
 
 			const botMessage = {
