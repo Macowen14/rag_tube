@@ -2,6 +2,26 @@
 
 A React + Vite single-page application for the YouTube Better project. Provides an authenticated interface for ingesting YouTube videos, chatting with video transcripts via RAG, generating AI-powered notes, and exporting them as Markdown or PDF.
 
+## Screenshots
+
+### Landing Page
+
+![Landing page with workspace preview and feature highlights](docs/screenshots/home.png)
+
+### Video Ingestion
+
+![Ingest a YouTube video by pasting its URL](docs/screenshots/ingest.png)
+
+### Grounded Chat
+
+![Ask questions about the video and receive context-aware answers](docs/screenshots/chat.png)
+
+### AI Notes Generation
+
+![Generate structured notes and export as Markdown or PDF](docs/screenshots/geenrate_notes.png)
+
+---
+
 ## Features
 
 - **Supabase Authentication**: Sign in with Email, Google, or GitHub via Supabase Auth.
@@ -86,4 +106,4 @@ The frontend attaches the current Supabase access token to all backend requests:
 Authorization: Bearer <access_token>
 ```
 
-The backend verifies this JWT and extracts the user ID for all protected endpoints.
+The backend verifies this JWT and extracts the user ID for all protected endpoints. Authentication is handled entirely by **Supabase Auth** over HTTPS — it is independent of the database provider used by the backend.
